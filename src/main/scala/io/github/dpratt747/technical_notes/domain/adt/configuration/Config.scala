@@ -1,4 +1,4 @@
-package adt.configuration
+package io.github.dpratt747.technical_notes.domain.adt.configuration
 
 final case class DatabaseName(value: String) extends AnyVal
 

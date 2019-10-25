@@ -1,15 +1,16 @@
-package persistence
+package test_utils
 
 import java.sql.DriverManager
 
 import com.whisk.docker.{DockerCommandExecutor, DockerContainer, DockerContainerState, DockerKit, DockerReadyChecker}
 import pureconfig.generic.auto._
 
+
 import scala.concurrent.duration._
 import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Try
 
-trait DockerPostgresService extends DockerKit {
+protected trait DockerPostgresService extends DockerKit {
 
   private val r = scala.util.Random
   private val postgresUser = "postgres"
