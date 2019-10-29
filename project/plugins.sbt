@@ -1,5 +1,6 @@
-addSbtPlugin("com.typesafe.sbt" % "sbt-native-packager" % "1.3.23")
 addSbtPlugin("org.scalameta" % "sbt-scalafmt" % "2.0.0")
 addSbtPlugin("net.virtual-void" % "sbt-dependency-graph" % "0.9.2")
 addSbtPlugin("ch.epfl.scala" % "sbt-scalafix" % "0.9.5")
-addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "5.2.0")
+addSbtPlugin("io.github.davidmweber" % "flyway-sbt" % "6.0.0")
+addSbtPlugin("com.tapad" % "sbt-docker-compose" % "1.0.34")
+addSbtPlugin("se.marcuslonnberg" % "sbt-docker" % "1.5.0")

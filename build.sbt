@@ -1,6 +1,8 @@
 name := "technical_notes"
 
-version := "0.1"
+organization := "dpratt747"
+
+version := "0.0.1"
 
 scalaVersion := "2.12.8"
 
@@ -11,6 +13,8 @@ scalacOptions ++= Seq(
   "-Ywarn-unused:implicits", "-Ywarn-unused:locals", "-Ywarn-unused:params", "-Ywarn-unused:patvars",
   "-Ywarn-unused:privates", "-Ywarn-value-discard"
 )
+
+enablePlugins(sbtdocker.DockerPlugin, DockerComposePlugin, FlywayPlugin)
 
 lazy val circeVersion = "0.12.0-RC2"
 lazy val scalaTestVersion = "3.0.8"
@@ -74,10 +78,14 @@ libraryDependencies ++= Seq(
   "org.flywaydb" % "flyway-core" % "6.0.3"
 ) ++ circe ++ testDependencies ++ doobie ++ dockerIt ++ http4s ++ monocle
 
-//enablePlugins(JavaAppPackaging)
-//enablePlugins(DockerPlugin)
-//enablePlugins(DockerComposePlugin)
-enablePlugins(FlywayPlugin)
+
+dockerImageCreationTask := docker.value
+
+dockerAutoPackageJavaApplication(exposedPorts = Seq(8080))
+
+imageNames in docker := Seq(
+  ImageName(s"${organization.value}/${name.value}:latest")
+)
 
 flywayUrl := "jdbc:postgresql://localhost:5432/technical_notes?user=postgres&password=docker"
 flywayUser := "postgres"

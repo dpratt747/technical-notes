@@ -1,6 +1,31 @@
 # Technical Notes Application
 
+
 ## Init Steps:
+
+- to create a docker image of an application run 
+```bash
+sbt docker
+```
+- run to scale up the containers and start application 
+```bash
+docker-compose up -d 
+```
+
+or
+
+```bash
+sbt dockerComposeUp
+```
+
+
+to stop containers:
+```bash
+sbt dockerComposeStop
+```
+
+
+# Alternatively
 
 #### Start postgres instance:
 
@@ -11,4 +36,4 @@ docker run --rm --name pg-docker -e POSTGRES_DB=technical_notes -e POSTGRES_PASS
 #### Run migrations 
 (inside project root)
 - sbt flywayMigrate
-- sbt flywayClean (plugin broken)
+- sbt flywayClean

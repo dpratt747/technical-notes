@@ -1,13 +1,12 @@
 package io.github.dpratt747.technical_notes.domain.notes
 
-import cats.{Functor, Monad}
+import cats.Monad
 import cats.implicits._
 import io.github.dpratt747.technical_notes.domain.adt.{Note, Tag}
 import io.github.dpratt747.technical_notes.domain.adt.values.TagId
 import io.github.dpratt747.technical_notes.infrastructure.repository.{NotesRepository, PostgreSQLNotesRepository, PostgreSQLTagsRepository, TagsRepository}
 
 class NoteService[F[_]](notesRepo: NotesRepository[F], tagsRepo: TagsRepository[F]) {
-
 
   final def addNote(input: Note)(implicit M: Monad[F]): F[Boolean] = {
 
@@ -20,10 +19,6 @@ class NoteService[F[_]](notesRepo: NotesRepository[F], tagsRepo: TagsRepository[
     // if the affected rows is greater than 0 the action succeeded else it failed
     insertion.map(_ > 0)
   }
-
-//  final def getTags: F[Vector[Tags]]
-
-
 
 }
 
