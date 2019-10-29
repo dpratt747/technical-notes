@@ -6,12 +6,9 @@ import doobie.Transactor
 import doobie.util.transactor.Transactor.Aux
 import io.github.dpratt747.technical_notes.domain.adt.configuration.{Conf, DatabaseName, HostName, Password, Port, UserName}
 import org.flywaydb.core.Flyway
-import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 
-trait Transaction {
-
-  val conf: Conf = ConfigSource.default.loadOrThrow[Conf]
+class PostgresDetails(conf: Conf){
 
   val postgresPort: Port = conf.postgres.port
   val databaseName: DatabaseName = conf.postgres.properties.databaseName
@@ -43,4 +40,8 @@ trait Transaction {
       fw.migrate()
     }.as(())
 
+}
+
+object PostgresDetails {
+  def apply(conf: Conf): PostgresDetails = new PostgresDetails(conf)
 }

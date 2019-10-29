@@ -57,7 +57,6 @@ lazy val circe = Seq(
 lazy val testDependencies = Seq(
   "org.scalactic" %% "scalactic" % scalaTestVersion,
   "org.scalatest" %% "scalatest" % scalaTestVersion % "test",
-  "ch.qos.logback" % "logback-classic" % "1.2.3" % Test,
   "org.mockito" %% "mockito-scala" % "1.6.2" % Test
 )
 
@@ -72,6 +71,7 @@ scalacOptions in Test += "-Dconfig.file=/test/resources/application.conf"
 
 libraryDependencies ++= Seq(
   "org.slf4j" % "slf4j-api" % "1.7.26",
+  "ch.qos.logback" % "logback-classic" % "1.2.3",
   "org.postgresql" % "postgresql" % "42.2.6",
   "org.scalikejdbc" %% "scalikejdbc" % "3.3.5",
   "com.github.pureconfig" %% "pureconfig" % "0.12.0",
@@ -81,7 +81,7 @@ libraryDependencies ++= Seq(
 
 dockerImageCreationTask := docker.value
 
-dockerAutoPackageJavaApplication(exposedPorts = Seq(8080))
+dockerAutoPackageJavaApplication()
 
 imageNames in docker := Seq(
   ImageName(s"${organization.value}/${name.value}:latest")
