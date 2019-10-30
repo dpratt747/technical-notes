@@ -7,7 +7,7 @@ import doobie.postgres._
 import doobie.postgres.implicits._
 import doobie.util.Read
 import doobie.util.transactor.Transactor
-import io.github.dpratt747.technical_notes.domain.adt.values.TagName
+import io.github.dpratt747.technical_notes.domain.adt.values.{Description, TagName, Term}
 import io.github.dpratt747.technical_notes.domain.adt.{Note, Tag}
 
 class PostgreSQLNotesRepository[F[_]: Bracket[*[_], Throwable]](val connection: Transactor[F]) extends NotesRepository[F] {
@@ -18,7 +18,7 @@ class PostgreSQLNotesRepository[F[_]: Bracket[*[_], Throwable]](val connection: 
         case Some(name) => name.map { name => Tag(none, TagName(name)) }
         case _ => List.empty[Tag]
       }
-      Note(id.some, term, description, tags)
+      Note(id.some, Term(term), Description(description), tags)
   }
 
   final def insertNote(note: Note): F[Int] = {
@@ -27,7 +27,9 @@ class PostgreSQLNotesRepository[F[_]: Bracket[*[_], Throwable]](val connection: 
       .update
       .run
       .transact(connection)
+      .exceptSomeSqlState { case sqlstate.class23.UNIQUE_VIOLATION => 0.pure[F] }
   }
+
 
   final def getNoteByTerm(term: String): F[Option[Note]] =
     sql"""SELECT n.id, n.term, n.description, array_agg(t.tag) as tags FROM (SELECT id, term, description, UNNEST(tags) as tag FROM notes) n full outer join tags t ON n.tag = t.id WHERE n.term=$term group by (n.id, n.term, n.description)"""

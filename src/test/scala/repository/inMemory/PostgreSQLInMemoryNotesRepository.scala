@@ -13,17 +13,19 @@ class PostgreSQLInMemoryNotesRepository[F[_]: Applicative] extends NotesReposito
     private val cache = new TrieMap[Int, Note]
 
     def insertNote(note: Note): F[Int] = {
-      val random = new Random(0)
-      lazy val randomId: Option[Int] = random.nextInt.some
-      val updatedNote: Note = GenLens[Note](_.id).set(randomId)(note)
-      updatedNote.id.foreach {
-        cache.put(_, updatedNote).pure[F]
+      val random = new Random()
+      lazy val randomId: Int = random.nextInt
+      val updatedNote: Note = GenLens[Note](_.id).set(randomId.some)(note)
+      val bool = cache.exists{ case (_, storedNote) => storedNote.term.value == note.term.value }
+      if(bool) {
+        0.pure[F]
+      } else {
+        cache.put(randomId, updatedNote).pure[F] *> 1.pure[F]
       }
-      1.pure[F]
     }
 
     def getNoteByTerm(term: String): F[Option[Note]] = {
-      cache.find { case (_, note) => note.term == term }.map(_._2).pure[F]
+      cache.find { case (_, note) => note.term.value == term }.map(_._2).pure[F]
     }
 
 }

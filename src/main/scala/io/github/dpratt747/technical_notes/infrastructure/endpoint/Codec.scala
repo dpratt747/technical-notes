@@ -1,23 +1,31 @@
 package io.github.dpratt747.technical_notes.infrastructure.endpoint
+import cats.data.NonEmptyList
 import cats.effect.Sync
 import io.circe.generic.auto._
-import io.circe.generic.extras.semiauto._
 import io.circe.{Decoder, Encoder}
 import io.github.dpratt747.technical_notes.domain.adt.Note
-import io.github.dpratt747.technical_notes.domain.adt.values.{TagId, TagName}
 import org.http4s.circe.{jsonEncoderOf, jsonOf}
 import org.http4s.{EntityDecoder, EntityEncoder}
+import shapeless.Unwrapped
 
 trait Codec {
 
-  implicit def noteDecoder[F[_]: Sync]: EntityDecoder[F, Note] = jsonOf[F, Note]
-  implicit def noteEncoder[F[_]: Sync]: EntityEncoder[F, Note] = jsonEncoderOf[F, Note]
+  implicit def notesDecoder[F[_]: Sync]: EntityDecoder[F, NonEmptyList[Note]] = jsonOf[F, NonEmptyList[Note]]
+  implicit def notesEncoder[F[_]: Sync]: EntityEncoder[F, NonEmptyList[Note]] = jsonEncoderOf[F, NonEmptyList[Note]]
 
-  implicit val tagIdValueClassEncoder: Encoder[TagId] = deriveUnwrappedEncoder
-  implicit val tagIdValueDecoder: Decoder[TagId] = deriveUnwrappedDecoder
+  implicit def decodeAnyVal[T, U](
+                                   unwrapped: Unwrapped.Aux[T, U],
+                                   decoder: Decoder[U]): Decoder[T] = Decoder.instance[T] { cursor =>
 
-  implicit val tagNameValueClassEncoder: Encoder[TagName] = deriveUnwrappedEncoder
-  implicit val tagNameValueDecoder: Decoder[TagName] = deriveUnwrappedDecoder
+    decoder(cursor).map(value => unwrapped.wrap(value))
+  }
+
+  implicit def encodeAnyVal[T, U](
+                                   unwrapped: Unwrapped.Aux[T, U],
+                                   encoder: Encoder[U]): Encoder[T] = Encoder.instance[T] { value =>
+
+    encoder(unwrapped.unwrap(value))
+  }
 
 }
 

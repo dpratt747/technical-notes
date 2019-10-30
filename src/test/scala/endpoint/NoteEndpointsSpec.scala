@@ -1,11 +1,12 @@
 package endpoint
 
+import cats.data.NonEmptyList
 import cats.effect.IO
 import cats.implicits._
 import io.circe.Json
 import io.circe.generic.auto._
 import io.circe.syntax._
-import io.github.dpratt747.technical_notes.domain.adt.values.{TagId, TagName}
+import io.github.dpratt747.technical_notes.domain.adt.values.{Description, TagId, TagName, Term}
 import io.github.dpratt747.technical_notes.domain.adt.{Note, Tag}
 import io.github.dpratt747.technical_notes.domain.notes.NoteService
 import io.github.dpratt747.technical_notes.infrastructure.endpoint.{Codec, NoteEndpoints}
@@ -24,14 +25,14 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
 
   describe("Note Endpoints") {
 
-    val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
-    val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
-    val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
-    val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
-    val router = Router(("/note", endpoint)).orNotFound
-
     it("should return a 400 if the mandatory headers are not sent with the request") {
-      val body = Note(None, "docker ps", "list docker processes", List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val router = Router(("/note", endpoint)).orNotFound
+
+      val body = Note(None, Term("docker ps"), Description("list docker processes"), List(Tag(None, TagName("DOCKER"))))
       val response: IO[Response[IO]] = router.run(
         Request(method = POST, uri = uri"/note")
           .withEntity(body.asJson)
@@ -40,16 +41,80 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
       Http4sServiceCheck[Json](response, BadRequest, "Error with request: Missing mandatory headers".asJson some)
     }
 
-    it("should accept a post request with a valid note format and return status OK(200)") {
+    it("should accept a post request with a valid note format and return status 200") {
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val router = Router(("/note", endpoint)).orNotFound
 
-      val body = Note(None, "docker ps", "list docker processes", List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note1 = Note(None, Term("docker ps"), Description("list docker processes"),
+        List(
+          Tag(None, TagName("DOCKER")),
+          Tag(None, TagName("DOCKER22222"))
+        )
+      )
+      val note2 = Note(None, Term("SELECT * FROM"), Description("some description1"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note3 = Note(None, Term("some technical term"), Description("some description2"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note4 = Note(None, Term("kubectl"), Description("some description3"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+
+      val payload  = NonEmptyList.of(note1, note2, note3, note4).asJson
+
       val response: IO[Response[IO]] = router.run(
         Request(method = POST, uri = uri"/note")
           .withHeaders(Header("request-id", java.util.UUID.randomUUID.toString))
-          .withEntity(body.asJson)
+          .withEntity(payload)
       )
 
       Http4sServiceCheck(response, Created)
+    }
+
+    it("should return bad request when duplicate notes (repeated terms) are sent in payload") {
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val router = Router(("/note", endpoint)).orNotFound
+
+      val note1 = Note(None, Term("docker ps"), Description("list docker processes"),
+        List(
+          Tag(None, TagName("DOCKER")),
+          Tag(None, TagName("DOCKER22222"))
+        )
+      )
+      val note2 = Note(None, Term("SELECT * FROM"), Description("some description1"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note3 = Note(None, Term("some technical term"), Description("some description2"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note4 = Note(None, Term("kubectl"), Description("some description3"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+      val note5 = Note(None, Term("SELECT * FROM"), Description("some description1"), List(Tag(TagId(1).some, TagName("DOCKER"))))
+
+      val payload  = NonEmptyList.of(note1, note2, note3, note4, note5).asJson
+
+      val response: IO[Response[IO]] = router.run(
+        Request(method = POST, uri = uri"/note")
+          .withHeaders(Header("request-id", java.util.UUID.randomUUID.toString))
+          .withEntity(payload)
+      )
+
+
+      Http4sServiceCheck(response, BadRequest)
+    }
+
+    it("should fail when sent an empty list as a payload") {
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val router = Router(("/note", endpoint)).orNotFound
+
+      val payload  = "[]".asJson
+
+      val response: IO[Response[IO]] = router.run(
+        Request(method = POST, uri = uri"/note")
+          .withHeaders(Header("request-id", java.util.UUID.randomUUID.toString))
+          .withEntity(payload)
+      )
+
+      Http4sServiceCheck(response, UnprocessableEntity)
     }
 
   }

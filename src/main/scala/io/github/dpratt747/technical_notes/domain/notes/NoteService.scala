@@ -1,6 +1,8 @@
 package io.github.dpratt747.technical_notes.domain.notes
 
 import cats.Monad
+import cats.data.NonEmptyList
+import cats.derived.auto.show._
 import cats.implicits._
 import io.github.dpratt747.technical_notes.domain.adt.{Note, Tag}
 import io.github.dpratt747.technical_notes.domain.adt.values.TagId
@@ -8,16 +10,26 @@ import io.github.dpratt747.technical_notes.infrastructure.repository.{NotesRepos
 
 class NoteService[F[_]](notesRepo: NotesRepository[F], tagsRepo: TagsRepository[F]) {
 
-  final def addNote(input: Note)(implicit M: Monad[F]): F[Boolean] = {
+  final def addNote(input: NonEmptyList[Note])(implicit M: Monad[F]): F[NonEmptyList[Either[String, Int]]] = {
 
-    val insertion: F[Int] = input.tags.map{ tag =>
-      tagsRepo.insertTagOrGetExisting(tag.tagName.value).map(id => Tag(TagId(id).some, tag.tagName))
-    }.traverse(identity).flatMap { tags =>
-        notesRepo.insertNote(Note(none, input.term, input.description, tags))
+    val action: NonEmptyList[F[(Int, Note)]] = input map { note =>
+
+      val tagsF: F[List[Tag]] = note.tags.map{ tag =>
+        tagsRepo.insertTagOrGetExisting(tag.tagName.value).map(id => Tag(TagId(id).some, tag.tagName))
+      }.traverse(identity)
+
+      for {
+        tags <- tagsF
+        n = Note(none, note.term, note.description, tags)
+        rowsAffected <- notesRepo.insertNote(n)
+      } yield (rowsAffected, n)
+
     }
 
-    // if the affected rows is greater than 0 the action succeeded else it failed
-    insertion.map(_ > 0)
+    action.sequence.map( _.map{ case (rowCount, note) =>
+      rowCount.asRight[String].ensure(s"Note term already exists: ${note.show}")(_ > 0)
+    })
+
   }
 
 }

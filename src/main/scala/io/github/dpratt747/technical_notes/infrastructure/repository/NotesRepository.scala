@@ -1,6 +1,5 @@
 package io.github.dpratt747.technical_notes.infrastructure.repository
 
-import doobie.util.Read
 import io.github.dpratt747.technical_notes.domain.adt.Note
 
 trait NotesRepository[F[_]] {
