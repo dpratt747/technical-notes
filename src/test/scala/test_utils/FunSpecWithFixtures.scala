@@ -17,7 +17,7 @@ import org.scalatest.{BeforeAndAfterEach, Matchers, Outcome}
 trait FunSpecWithFixtures extends FixtureAnyFunSpec with BeforeAndAfterEach with DockerTestKit with DockerPostgresService with Matchers {
   type FixtureParam = Flyway
   private val client: DockerClient = DefaultDockerClient.fromEnv().build()
-  private val url = s"jdbc:postgresql://${postgresHostName.value}:$postgresExposedPort/technical_notes_test"
+  private val url = s"jdbc:postgresql://${postgresHostName.value}:$postgresExposedPort/${databaseName.value}"
   private val flyway: Flyway = Flyway.configure.dataSource(url, postgresUser.value, postgresPassword.value).load
 
   implicit val pc: PatienceConfig = PatienceConfig(Span(40, Seconds), Span(2, Seconds))

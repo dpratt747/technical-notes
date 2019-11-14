@@ -29,7 +29,7 @@ object WebServer extends IOApp {
       ).orNotFound
       _ <- Resource.liftF(details.initDB)
       server <- BlazeServerBuilder[F]
-        .bindHttp(port) //defaults to port 8080 and host IP
+        .bindHttp(port)
         .withHttpApp(httpApp)
         .resource
     } yield server
