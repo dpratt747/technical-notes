@@ -16,6 +16,11 @@ scalacOptions ++= Seq(
 
 enablePlugins(sbtdocker.DockerPlugin, DockerComposePlugin, FlywayPlugin)
 
+// When running tests, we use this configuration
+javaOptions in Test += s"-Dconfig.file=${sourceDirectory.value}/test/resources/application.test.conf"
+// We need to fork a JVM process when testing so the Java options above are applied
+fork in Test := true
+
 lazy val circeVersion = "0.12.0-RC2"
 lazy val scalaTestVersion = "3.0.8"
 lazy val doobieVersion = "0.8.2"
@@ -76,7 +81,8 @@ libraryDependencies ++= Seq(
   "org.postgresql" % "postgresql" % "42.2.6",
   "org.scalikejdbc" %% "scalikejdbc" % "3.3.5",
   "com.github.pureconfig" %% "pureconfig" % "0.12.0",
-  "org.flywaydb" % "flyway-core" % "6.0.3"
+  "org.flywaydb" % "flyway-core" % "6.0.3",
+  "javax.activation" % "activation" % "1.1.1" // work around for javax test errors
 ) ++ circe ++ testDependencies ++ doobie ++ dockerIt ++ http4s ++ monocle
 
 

@@ -1,0 +1,9 @@
+version: '3.7'
+
+services:
+  technical-notes:
+    ports:
+      - "0:5005"
+  postgres:
+    ports:
+      - "${POSTGRES_EXPOSED_PORT}:5432"
