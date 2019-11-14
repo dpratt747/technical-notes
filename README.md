@@ -3,11 +3,11 @@
 
 ## Init Steps:
 
-- to create a docker image of an application run 
+- to create a docker image of an application: 
 ```bash
 sbt docker
 ```
-- run to scale up the containers and start application 
+- to scale up the containers and start the application:
 ```bash
 docker-compose up -d 
 ```

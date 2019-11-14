@@ -9,14 +9,16 @@ services:
   technical-notes:
     environment:
       JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005
+        - POSTGRES_DB=${POSTGRES_DB}
+        - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+        - POSTGRES_USER=${POSTGRES_USER}
     image: dpratt747/technical_notes:latest
+    ports:
+      - "${APPLICATION_EXPOSED_PORT}:${INTERNAL_APPLICATION_EXPOSED_PORT}"
     networks:
       - backend
     depends_on:
       - postgres
-    ports:
-      - "8080:8080"
-      - "0:5005"
 
   postgres:
     image: postgres:latest
@@ -31,6 +33,3 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-#      to make this non accessible outside the network remove the exposed port so the definition look like: - "5432"
-      - "${POSTGRES_EXPOSED_PORT}:5432"
