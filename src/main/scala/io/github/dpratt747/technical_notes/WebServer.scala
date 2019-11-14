@@ -16,6 +16,7 @@ import pureconfig.generic.auto._
 object WebServer extends IOApp {
 
   final def startServer[F[_] : ContextShift : ConcurrentEffect : Timer]: Resource[F, H4Server[F]] = {
+    val port: Int = scala.util.Properties.envOrElse("INTERNAL_APPLICATION_EXPOSED_PORT", "8080").toInt
     for {
       _ <- Resource.liftF(LoggerFactory.getLogger(this.getClass).pure[F])
       conf = ConfigSource.default.loadOrThrow[Conf]
@@ -28,7 +29,7 @@ object WebServer extends IOApp {
       ).orNotFound
       _ <- Resource.liftF(details.initDB)
       server <- BlazeServerBuilder[F]
-        .bindHttp() //defaults to port 8080 and host IP
+        .bindHttp(port) //defaults to port 8080 and host IP
         .withHttpApp(httpApp)
         .resource
     } yield server
