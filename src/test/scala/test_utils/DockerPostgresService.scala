@@ -23,7 +23,7 @@ protected trait DockerPostgresService extends DockerKit {
   private val random = scala.util.Random
 
   // max port number ranges between 49152 and 65535; opting to use lower bound
-  private val upperBound = 49152 //todo: may not need to add or minus 80
+  private val upperBound = 49152
   private lazy val randomPort = random.nextInt(upperBound)
 
 
