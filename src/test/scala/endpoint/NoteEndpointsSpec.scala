@@ -38,7 +38,25 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
           .withEntity(body.asJson)
       )
 
-      Http4sServiceCheck[Json](response, BadRequest, "Error with request: Missing mandatory headers".asJson some)
+      Http4sServiceCheck[Json](response, BadRequest, "Errors with request: [ Missing mandatory header: request-id ]".asJson some)
+    }
+
+    it("should return a 400 if the mandatory headers are sent with an incorrect value type") {
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val router = Router(("/note", endpoint)).orNotFound
+
+      val body = Note(None, Term("docker ps"), Description("list docker processes"), List(Tag(None, TagName("DOCKER"))))
+      val response: IO[Response[IO]] = router.run(
+        Request(method = POST, uri = uri"/note")
+          .withHeaders(Header("request-id", "this is definetly not a valid uuid"))
+          .withEntity(body.asJson)
+
+      )
+
+      Http4sServiceCheck[Json](response, BadRequest, "Errors with request: [ The header was correctly provided but the header type does not match the expected type of: UUID ]".asJson some)
     }
 
     it("should accept a post request with a valid note format and return status 200") {

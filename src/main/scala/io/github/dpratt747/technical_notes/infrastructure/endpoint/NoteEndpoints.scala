@@ -7,18 +7,17 @@ import org.http4s.circe._
 import io.circe.syntax._
 import io.github.dpratt747.technical_notes.domain.Middleware
 import io.github.dpratt747.technical_notes.domain.adt.Note
-import io.github.dpratt747.technical_notes.domain.adt.service.{HeaderTypes, UUID}
+import io.github.dpratt747.technical_notes.domain.adt.service.{HeaderType, UUID}
 import io.github.dpratt747.technical_notes.domain.notes.NoteService
 import org.http4s.dsl.Http4sDsl
 import org.http4s.{HttpRoutes, Response}
 
 class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Codec {
 
-  private val mandatoryHeaders: Map[String, HeaderTypes] = Map("request-id" -> UUID)
+  private val mandatoryHeaders: Map[String, HeaderType] = Map("request-id" -> UUID)
 
-  private def handleInsertResult(input: NonEmptyList[Either[String, Int]]): F[Response[F]] = {
+  private final def handleInsertResult(input: NonEmptyList[Either[String, Int]]): F[Response[F]] = {
     val lefts = input.collect{ case Left(value) => value}
-    val rights = input.collect{ case Right(value) => value}
 
     if (lefts.isEmpty){
       Created()
@@ -44,7 +43,7 @@ class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Co
    *  }
    * ]
    */
-  private def postNote(noteService: NoteService[F]): HttpRoutes[F] = HttpRoutes.of[F] {
+  private final def postNote(noteService: NoteService[F]): HttpRoutes[F] = HttpRoutes.of[F] {
     case request @ POST -> Root =>
       request.decode[NonEmptyList[Note]] {
         notes =>
@@ -52,7 +51,7 @@ class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Co
       }
   }
 
-  final def endpoints(notesService: NoteService[F]): HttpRoutes[F] = {
+  private final def endpoints(notesService: NoteService[F]): HttpRoutes[F] = {
     validateMandatoryHeaders(postNote(notesService), mandatoryHeaders)
   }
 }
