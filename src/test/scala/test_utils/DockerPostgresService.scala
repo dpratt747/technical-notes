@@ -3,7 +3,8 @@ package test_utils
 import java.sql.DriverManager
 
 import com.whisk.docker.{DockerCommandExecutor, DockerContainer, DockerContainerState, DockerKit, DockerReadyChecker}
-import io.github.dpratt747.technical_notes.domain.adt.configuration.{Conf, DatabaseName, HostName, Password, Port, UserName}
+import io.github.dpratt747.technical_notes.domain.adt.configuration.Conf
+import io.github.dpratt747.technical_notes.domain.adt.values._
 import pureconfig.ConfigSource
 import pureconfig.generic.auto._
 

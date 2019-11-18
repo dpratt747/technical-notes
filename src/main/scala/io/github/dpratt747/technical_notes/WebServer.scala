@@ -6,6 +6,7 @@ import io.github.dpratt747.technical_notes.domain.adt.configuration.Conf
 import io.github.dpratt747.technical_notes.domain.notes.NoteService
 import io.github.dpratt747.technical_notes.infrastructure.endpoint.{HealthEndpoints, NoteEndpoints}
 import io.github.dpratt747.technical_notes.infrastructure.repository.{PostgreSQLNotesRepository, PostgreSQLTagsRepository, PostgresDetails}
+import org.http4s.server.middleware.Logger
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
 import org.http4s.server.{Router, Server => H4Server}
@@ -28,14 +29,16 @@ object WebServer extends IOApp {
       tagsRepo = PostgreSQLTagsRepository[F](details.connection)
       notesRepo = PostgreSQLNotesRepository[F](details.connection)
       noteService = NoteService[F](notesRepo, tagsRepo)
+//      authenticator = Auth.jwtAuthenticator[F, HMACSHA256](key, authRepo, userRepo)
       httpApp = Router(
         "/notes" -> NoteEndpoints.endpoints(noteService),
         "/health" -> HealthEndpoints.endpoints
       ).orNotFound
+      httpAppWithLogs = Logger.httpApp(logHeaders = true, logBody = true)(httpApp)
       _ <- Resource.liftF(details.initDB)
       server <- BlazeServerBuilder[F]
         .bindHttp(port, host)
-        .withHttpApp(httpApp)
+        .withHttpApp(httpAppWithLogs)
         .resource
     } yield server
   }

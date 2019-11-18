@@ -1,14 +1,7 @@
 package io.github.dpratt747.technical_notes.domain.adt.configuration
 
-final case class DatabaseName(value: String) extends AnyVal
+import io.github.dpratt747.technical_notes.domain.adt.values._
 
-final case class UserName(value: String) extends AnyVal
-
-final case class HostName(value: String) extends AnyVal
-
-final case class Password(value: String) extends AnyVal
-
-final case class Port(value: Int) extends AnyVal
 
 final case class Properties(databaseName: DatabaseName, user: UserName, password: Password)
 

@@ -57,6 +57,6 @@ class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Co
 }
 
 object NoteEndpoints {
-  final def endpoints[F[_] : Sync](orderService: NoteService[F]): HttpRoutes[F] =
-    new NoteEndpoints[F].endpoints(orderService)
+  final def endpoints[F[_] : Sync](noteService: NoteService[F]): HttpRoutes[F] =
+    new NoteEndpoints[F].endpoints(noteService)
 }

@@ -4,11 +4,12 @@ import cats.effect.{Async, ContextShift, Sync}
 import cats.syntax.functor._
 import doobie.Transactor
 import doobie.util.transactor.Transactor.Aux
-import io.github.dpratt747.technical_notes.domain.adt.configuration.{Conf, DatabaseName, HostName, Password, Port, UserName}
+import io.github.dpratt747.technical_notes.domain.adt.configuration.Conf
+import io.github.dpratt747.technical_notes.domain.adt.values._
 import org.flywaydb.core.Flyway
 import pureconfig.generic.auto._
 
-class PostgresDetails(conf: Conf){
+final class PostgresDetails(conf: Conf){
 
   val postgresPort: Port = conf.postgres.port
   val databaseName: DatabaseName = conf.postgres.properties.databaseName
@@ -24,12 +25,12 @@ class PostgresDetails(conf: Conf){
 
   private val url = s"jdbc:postgresql://${postgresHostName.value}:${postgresPort.value}/${databaseName.value}"
 
-  final def connection[F[_] : Async : ContextShift]: Aux[F, Unit] = Transactor.fromDriverManager[F](
+  def connection[F[_] : Async : ContextShift]: Aux[F, Unit] = Transactor.fromDriverManager[F](
     "org.postgresql.Driver",
     url, postgresUser.value, postgresPassword.value
   )
 
-  final def initDB[F[_]](implicit S: Sync[F]): F[Unit] =
+  def initDB[F[_]](implicit S: Sync[F]): F[Unit] =
     S.delay {
       val fw: Flyway =
         Flyway
@@ -43,5 +44,5 @@ class PostgresDetails(conf: Conf){
 }
 
 object PostgresDetails {
-  def apply(conf: Conf): PostgresDetails = new PostgresDetails(conf)
+  final def apply(conf: Conf): PostgresDetails = new PostgresDetails(conf)
 }

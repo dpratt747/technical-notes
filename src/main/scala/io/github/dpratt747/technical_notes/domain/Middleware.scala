@@ -48,12 +48,9 @@ trait Middleware[F[_]] {
         }
       }.toList
 
-      lazy val lefts = validate collect { case Left(x) => x }
-      lazy val rights = validate collect { case Right(x) => x }
-
-      (lefts, rights) match {
-        case (Nil, _ ) => service(req)
-        case (list @ _::_, _ ) => badRequestService(service(req), s"[ ${list.mkString(", ")} ]".some)
+      validate collect { case Left(x) => x } match {
+        case Nil => service(req)
+        case list @ _::_ => badRequestService(service(req), s"[ ${list.mkString(", ")} ]".some)
       }
 
     }
