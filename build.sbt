@@ -26,7 +26,7 @@ lazy val scalaTestVersion = "3.0.8"
 lazy val doobieVersion = "0.8.2"
 lazy val http4sVersion = "0.20.11"
 lazy val monocleVersion = "2.0.0"
-lazy val TsecVersion = "0.1.0"
+lazy val tsecVersion = "0.1.0"
 
 lazy val doobie = Seq(
   "org.tpolecat" %% "doobie-core" % doobieVersion,
@@ -53,13 +53,13 @@ lazy val http4s = Seq(
 ) map (_ % http4sVersion)
 
 lazy val tsec = Seq(
-  "io.github.jmcardon" %% "tsec-common" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-password" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-mac" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-signatures" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-jwt-mac" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-jwt-sig" % TsecVersion,
-  "io.github.jmcardon" %% "tsec-http4s" % TsecVersion,
+  "io.github.jmcardon" %% "tsec-common" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-password" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-mac" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-signatures" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-jwt-mac" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-jwt-sig" % tsecVersion,
+  "io.github.jmcardon" %% "tsec-http4s" % tsecVersion,
 )
 
 lazy val circe = Seq(
