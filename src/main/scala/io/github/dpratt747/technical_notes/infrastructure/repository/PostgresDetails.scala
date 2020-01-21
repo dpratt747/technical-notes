@@ -1,5 +1,6 @@
 package io.github.dpratt747.technical_notes.infrastructure.repository
 
+import cats.data.Reader
 import cats.effect.{Async, ContextShift, Sync}
 import cats.syntax.functor._
 import doobie.Transactor
@@ -8,40 +9,33 @@ import io.github.dpratt747.technical_notes.domain.adt.configuration.{Conf, Datab
 import org.flywaydb.core.Flyway
 import pureconfig.generic.auto._
 
-class PostgresDetails(conf: Conf){
+final class PostgresDetails {
 
-  val postgresPort: Port = conf.postgres.port
-  val databaseName: DatabaseName = conf.postgres.properties.databaseName
-  val postgresUser: UserName = conf.postgres.properties.user
-  val postgresPassword: Password = conf.postgres.properties.password
-  val postgresHostName: HostName = conf.postgres.hostName
+  private val url = Reader{conf: Conf =>
+    s"jdbc:postgresql://${conf.postgres.hostName.value}:${conf.postgres.port.value}/${conf.postgres.properties.databaseName.value}"
+  }
 
-  require(postgresPort.value.isValidInt)
-  require(databaseName.value.nonEmpty)
-  require(postgresUser.value.nonEmpty)
-  require(postgresPassword.value.nonEmpty)
-  require(postgresHostName.value.nonEmpty)
+  def connection[F[_] : Async : ContextShift] = Reader { conf: Conf =>
+    Transactor.fromDriverManager[F](
+      "org.postgresql.Driver",
+      url.run(conf), conf.postgres.properties.user.value, conf.postgres.properties.password.value
+    )
+  }
 
-  private val url = s"jdbc:postgresql://${postgresHostName.value}:${postgresPort.value}/${databaseName.value}"
-
-  final def connection[F[_] : Async : ContextShift]: Aux[F, Unit] = Transactor.fromDriverManager[F](
-    "org.postgresql.Driver",
-    url, postgresUser.value, postgresPassword.value
-  )
-
-  final def initDB[F[_]](implicit S: Sync[F]): F[Unit] =
+  def initDB[F[_]](implicit S: Sync[F]): Reader[Conf, F[Unit]] = Reader { conf: Conf =>
     S.delay {
       val fw: Flyway =
         Flyway
           .configure()
-          .dataSource(url, postgresUser.value, postgresPassword.value)
+          .dataSource(url.run(conf), conf.postgres.properties.user.value, conf.postgres.properties.password.value)
           .load()
 
       fw.migrate()
     }.as(())
+  }
 
 }
 
 object PostgresDetails {
-  def apply(conf: Conf): PostgresDetails = new PostgresDetails(conf)
+  def apply: PostgresDetails = new PostgresDetails
 }

@@ -15,11 +15,11 @@ final class PostgreSQLTagsRepositorySpec extends FunSpecWithFixtures with Matche
 
     val kubernetesTagName = "Kubernetes"
     val dockerTagName = "Docker"
-    val repo = new PostgreSQLTagsRepository[IO](connection)
+    val repo = new PostgreSQLTagsRepository[IO]
 
     it("should add a tag and return an int representing the generated primary key"){ flyway =>
       flyway.migrate
-      repo.insertTagOrGetExisting(kubernetesTagName).unsafeRunSync shouldEqual 1
+      repo.insertTagOrGetExisting(kubernetesTagName).run.unsafeRunSync shouldEqual 1
       repo.insertTagOrGetExisting(dockerTagName).unsafeRunSync shouldEqual 2
     }
 

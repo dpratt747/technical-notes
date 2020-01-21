@@ -28,7 +28,7 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
     it("should return a 400 if the mandatory headers are not sent with the request") {
       val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
       val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
-      val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
+      val service: NoteService[IO] = NoteService[IO]
       val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
       val router = Router(("/note", endpoint)).orNotFound
 

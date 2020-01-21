@@ -2,6 +2,7 @@ package io.github.dpratt747.technical_notes
 
 import cats.effect.{ConcurrentEffect, ContextShift, ExitCode, IO, IOApp, Resource, Timer}
 import cats.implicits._
+import doobie.util.transactor.Transactor
 import io.github.dpratt747.technical_notes.domain.adt.configuration.Conf
 import io.github.dpratt747.technical_notes.domain.notes.NoteService
 import io.github.dpratt747.technical_notes.infrastructure.endpoint.{HealthEndpoints, NoteEndpoints}
@@ -22,18 +23,17 @@ object WebServer extends IOApp {
     val host: String = Properties.envOrElse("APPLICATION_HOST_NAME", "localhost")
 
     for {
-      _ <- Resource.liftF(LoggerFactory.getLogger(this.getClass).pure[F])
+      logger <- Resource.liftF(LoggerFactory.getLogger(this.getClass).pure[F])
       conf = ConfigSource.default.loadOrThrow[Conf]
-      details = PostgresDetails(conf)
-      tagsRepo = PostgreSQLTagsRepository[F](details.connection)
-      notesRepo = PostgreSQLNotesRepository[F](details.connection)
-      noteService = NoteService[F](notesRepo, tagsRepo)
+      details = PostgresDetails.apply
+      transaction = details.connection.run(conf)
       httpApp = Router(
-        "/notes" -> NoteEndpoints.endpoints(noteService),
+        "/notes" -> NoteEndpoints[F].run(NoteService[F], PostgreSQLTagsRepository[F], PostgreSQLNotesRepository[F], transaction),
         "/health" -> HealthEndpoints.endpoints
       ).orNotFound
-      _ <- Resource.liftF(details.initDB)
-      server <- BlazeServerBuilder[F]
+      init <- details.initDB.run(conf)
+      _ = Resource.liftF(init)
+      server = BlazeServerBuilder[F]
         .bindHttp(port, host)
         .withHttpApp(httpApp)
         .resource

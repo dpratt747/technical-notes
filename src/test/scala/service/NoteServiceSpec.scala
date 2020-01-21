@@ -24,7 +24,7 @@ final class NoteServiceSpec extends AnyFunSpec with Matchers {
       val input = data.NonEmptyList.of(
         Note(none, Term("docker ps"), Description("list docker container"), List.empty[Tag])
       )
-      service.addNote(input).unsafeRunSync shouldEqual NonEmptyList.of(1.asRight)
+      service.addNotes(input).unsafeRunSync shouldEqual NonEmptyList.of(1.asRight)
 
     }
 
@@ -39,7 +39,7 @@ final class NoteServiceSpec extends AnyFunSpec with Matchers {
           Note(none, Term("docker ps"), Description("list docker container"), List.empty[Tag])
       )
 
-      val action = service.addNote(input).unsafeRunSync
+      val action = service.addNotes(input).unsafeRunSync
 
       action.collect{case Right(v) => v}.size shouldEqual 1
       action.collect{case Left(v) => v}.size shouldEqual 2

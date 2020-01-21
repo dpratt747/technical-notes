@@ -1,40 +1,40 @@
 package io.github.dpratt747.technical_notes.domain.notes
 
-import cats.Monad
-import cats.data.NonEmptyList
+import cats.{Id, Monad}
+import cats.data.{NonEmptyList, Reader}
 import cats.derived.auto.show._
 import cats.implicits._
+import doobie.util.transactor.Transactor
 import io.github.dpratt747.technical_notes.domain.adt.{Note, Tag}
 import io.github.dpratt747.technical_notes.domain.adt.values.TagId
-import io.github.dpratt747.technical_notes.infrastructure.repository.{NotesRepository, PostgreSQLNotesRepository, PostgreSQLTagsRepository, TagsRepository}
+import io.github.dpratt747.technical_notes.infrastructure.repository.{NotesRepository, TagsRepository}
 
-class NoteService[F[_]](notesRepo: NotesRepository[F], tagsRepo: TagsRepository[F]) {
+final class NoteService[F[_]] {
 
-  final def addNote(input: NonEmptyList[Note])(implicit M: Monad[F]): F[NonEmptyList[Either[String, Int]]] = {
+  type AddNoteReader = Reader[(TagsRepository[F], NotesRepository[F], Transactor[F]), F[NonEmptyList[Either[String, Int]]]]
 
-    val action: NonEmptyList[F[(Int, Note)]] = input map { note =>
+  def addNotes(input: NonEmptyList[Note])(implicit M: Monad[F]): AddNoteReader = Reader{ case (tagsRepo: TagsRepository[F], notesRepo: NotesRepository[F], connection: Transactor[F]) =>
 
+    val action: F[NonEmptyList[(Int, Note)]] = input.map{ note =>
       val tagsF: F[List[Tag]] = note.tags.map{ tag =>
-        tagsRepo.insertTagOrGetExisting(tag.tagName.value).map(id => Tag(TagId(id).some, tag.tagName))
-      }.traverse(identity)
+        tagsRepo.insertTagOrGetExisting(tag.tagName.value).run(connection).map(_.map(id => Tag(TagId(id).some, tag.tagName)))
+      }.sequence
 
       for {
         tags <- tagsF
         n = Note(none, note.term, note.description, tags)
-        rowsAffected <- notesRepo.insertNote(n)
+        insertNotCall <- notesRepo.insertNote(n).run(connection)
+        rowsAffected <- insertNotCall
       } yield (rowsAffected, n)
+    }.sequence
 
-    }
-
-    action.sequence.map( _.map{ case (rowCount, note) =>
+    action.map(_.map{ case (rowCount, note) =>
       rowCount.asRight[String].ensure(s"Note term already exists: ${note.show}")(_ > 0)
     })
-
   }
 
 }
 
 object NoteService {
-  final def apply[F[_]](notesRepository: NotesRepository[F], tagsRepository: TagsRepository[F]): NoteService[F] =
-    new NoteService[F](notesRepository, tagsRepository)
+  final def apply[F[_]]: NoteService[F] = new NoteService[F]
 }
