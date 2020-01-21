@@ -15,7 +15,6 @@ class HealthEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with 
 }
 
 object HealthEndpoints {
-  final def endpoints[F[_] : Sync]: HttpRoutes[F] =
-    new HealthEndpoints[F].endpoints
+  final def apply[F[_] : Sync]: HttpRoutes[F] = new HealthEndpoints[F].endpoints
 }
 

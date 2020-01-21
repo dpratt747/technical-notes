@@ -23,15 +23,15 @@ final class PostgreSQLNotesRepositorySpec extends FunSpecWithFixtures with Match
 
     it("should add a note and return an int representing rows affected when non duplicate terms are passed"){ flyway =>
       flyway.migrate
-      repo.insertNote(row1).unsafeRunSync shouldEqual 1
-      repo.insertNote(row2.copy(term = Term("docker ps -a"))).unsafeRunSync shouldEqual 1
+      repo.insertNote(row1).run(_).unsafeRunSync shouldEqual 1
+      repo.insertNote(row2.copy(term = Term("docker ps -a"))).run(_).unsafeRunSync shouldEqual 1
     }
 
     it("should complain when attempting to add a note with a term that already exists"){ flyway =>
       flyway.migrate
-      repo.insertNote(row1).unsafeRunSync shouldEqual 1
-      repo.insertNote(row1).unsafeRunSync shouldEqual 0
-      repo.insertNote(row1).unsafeRunSync shouldEqual 0
+      repo.insertNote(row1).run(_).unsafeRunSync shouldEqual 1
+      repo.insertNote(row1).run(_).unsafeRunSync shouldEqual 0
+      repo.insertNote(row1).run(_).unsafeRunSync shouldEqual 0
 
 //      val exception = the [PSQLException] thrownBy repo.insertNote(row2).unsafeRunSync
 //      exception.getMessage should include("unique constraint")
@@ -39,15 +39,15 @@ final class PostgreSQLNotesRepositorySpec extends FunSpecWithFixtures with Match
 
     it("should get a note by its term if it exists"){ flyway =>
       flyway.migrate
-      repo.insertNote(row1).unsafeRunSync shouldEqual 1
-      val query = repo.getNoteByTerm("docker ps").unsafeRunSync
+      repo.insertNote(row1).run(_).unsafeRunSync shouldEqual 1
+      val query = repo.getNoteByTerm("docker ps").run(_).unsafeRunSync
       val expected = row1 lens(_.tags) set List.empty[Tag] lens(_.id) set 1.some
       query.value shouldEqual expected
     }
 
     it("should fail to get a note by its term if it does not exists"){ flyway =>
       flyway.migrate
-      val query = repo.getNoteByTerm("docker ps").unsafeRunSync
+      val query = repo.getNoteByTerm("docker ps").run(_).unsafeRunSync
       query.isDefined shouldBe false
     }
 

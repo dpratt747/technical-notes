@@ -1,6 +1,8 @@
 package repository.inMemory
 import cats._
+import cats.data.Reader
 import cats.implicits._
+import doobie.util.transactor.Transactor
 import io.github.dpratt747.technical_notes.domain.adt.Note
 import io.github.dpratt747.technical_notes.infrastructure.repository.NotesRepository
 import monocle.macros.GenLens
@@ -12,7 +14,7 @@ class PostgreSQLInMemoryNotesRepository[F[_]: Applicative] extends NotesReposito
 
     private val cache = new TrieMap[Int, Note]
 
-    def insertNote(note: Note): F[Int] = {
+    def insertNote(note: Note) = Reader{ _: Transactor[F] =>
       val random = new Random()
       lazy val randomId: Int = random.nextInt
       val updatedNote: Note = GenLens[Note](_.id).set(randomId.some)(note)
@@ -24,7 +26,7 @@ class PostgreSQLInMemoryNotesRepository[F[_]: Applicative] extends NotesReposito
       }
     }
 
-    def getNoteByTerm(term: String): F[Option[Note]] = {
+    def getNoteByTerm(term: String) = Reader{ _: Transactor[F] =>
       cache.find { case (_, note) => note.term.value == term }.map(_._2).pure[F]
     }
 

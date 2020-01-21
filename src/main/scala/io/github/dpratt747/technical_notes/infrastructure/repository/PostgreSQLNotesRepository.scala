@@ -31,7 +31,6 @@ final class PostgreSQLNotesRepository[F[_]: Bracket[*[_], Throwable]] extends No
       .exceptSomeSqlState { case sqlstate.class23.UNIQUE_VIOLATION => 0.pure[F] }
   }
 
-
   def getNoteByTerm(term: String): Reader[Transactor[F], F[Option[Note]]] = Reader{ connection: Transactor[F] =>
     sql"""SELECT n.id, n.term, n.description, array_agg(t.tag) as tags FROM (SELECT id, term, description, UNNEST(tags) as tag FROM notes) n full outer join tags t ON n.tag = t.id WHERE n.term=$term group by (n.id, n.term, n.description)"""
       .query[Note]

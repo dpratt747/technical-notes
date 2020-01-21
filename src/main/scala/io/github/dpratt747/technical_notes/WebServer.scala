@@ -29,7 +29,7 @@ object WebServer extends IOApp {
       transaction = details.connection.run(conf)
       httpApp = Router(
         "/notes" -> NoteEndpoints[F].run(NoteService[F], PostgreSQLTagsRepository[F], PostgreSQLNotesRepository[F], transaction),
-        "/health" -> HealthEndpoints.endpoints
+        "/health" -> HealthEndpoints[F]
       ).orNotFound
       init <- details.initDB.run(conf)
       _ = Resource.liftF(init)
