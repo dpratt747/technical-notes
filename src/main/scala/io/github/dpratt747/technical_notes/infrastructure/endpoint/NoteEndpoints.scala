@@ -21,15 +21,6 @@ class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Co
 
   private val mandatoryHeaders: Map[String, HeaderType] = Map("request-id" -> UUID)
 
-  private final def handleInsertResult(input: NonEmptyList[Either[String, Int]]): F[Response[F]] = {
-    val lefts = input.collect{ case Left(value) => value}
-    if (lefts.isEmpty){
-      Created()
-    } else {
-      BadRequest(lefts.asJson)
-    }
-  }
-
   /***
    * valid payload:
    * [
@@ -46,19 +37,33 @@ class NoteEndpoints[F[_] : Sync] extends Http4sDsl[F] with Middleware[F] with Co
    *  }
    * ]
    */
-  private final def postNote = Reader{  case (ns: NoteService[F], tr: TagsRepository[F], nr: NotesRepository[F], t: Transactor[F]) =>
+  private final def postNote: NoteServiceReader = Reader{  case (ns: NoteService[F], tr: TagsRepository[F], nr: NotesRepository[F], t: Transactor[F]) =>
     HttpRoutes.of[F] {
       case request@POST -> Root =>
-        request.decode[NonEmptyList[Note]] {
-          notes =>
-            ns.addNotes(notes).run(tr, nr, t).map(_.flatMap(handleInsertResult))
-        }
+      request.decode[NonEmptyList[Note]] {
+        notes =>
+          for {
+            addNoteF <- ns.addNotes(notes).run(tr, nr, t)
+            addNote <- addNoteF
+            res <- handleInsertResult(addNote)
+          } yield res
+      }
     }
   }
 
   private final def endpoints: NoteServiceReader = Reader{ case (ns: NoteService[F], tr: TagsRepository[F], nr: NotesRepository[F], t: Transactor[F]) =>
     ValidateMandatoryHeaders(postNote.run(ns, tr, nr, t), mandatoryHeaders)
   }
+
+  private final def handleInsertResult(input: NonEmptyList[Either[String, Int]]): F[Response[F]] = {
+    val lefts = input.collect{ case Left(value) => value}
+    if (lefts.isEmpty){
+      Created()
+    } else {
+      BadRequest(lefts.asJson)
+    }
+  }
+
 }
 
 object NoteEndpoints {

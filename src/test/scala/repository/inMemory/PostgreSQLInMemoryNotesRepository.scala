@@ -33,6 +33,6 @@ class PostgreSQLInMemoryNotesRepository[F[_]: Applicative] extends NotesReposito
 }
 
 object PostgreSQLInMemoryNotesRepository {
-  final def apply[F[_]: Applicative]() = new PostgreSQLInMemoryNotesRepository[F]
+  final def apply[F[_]: Applicative] = new PostgreSQLInMemoryNotesRepository[F]
 }
 

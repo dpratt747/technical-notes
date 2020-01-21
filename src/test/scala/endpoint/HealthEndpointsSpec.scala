@@ -16,7 +16,7 @@ final class HealthEndpointsSpec extends AnyFunSpec with Matchers with Codec {
   describe("Health Endpoint") {
 
     it("should return a 200 when hit") {
-      val endpoint: HttpRoutes[IO] = HealthEndpoints.endpoints[IO]
+      val endpoint: HttpRoutes[IO] = HealthEndpoints[IO]
       val router = Router(("/health", endpoint)).orNotFound
 
       val response: IO[Response[IO]] = router.run(

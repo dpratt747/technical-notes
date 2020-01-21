@@ -26,10 +26,10 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
   describe("Note Endpoints") {
 
     it("should return a 400 if the mandatory headers are not sent with the request") {
-      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
-      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
+      val noteRepo = PostgreSQLInMemoryNotesRepository[IO]
+      val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]
       val service: NoteService[IO] = NoteService[IO]
-      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints[IO](service)
       val router = Router(("/note", endpoint)).orNotFound
 
       val body = Note(None, Term("docker ps"), Description("list docker processes"), List(Tag(None, TagName("DOCKER"))))
@@ -45,7 +45,7 @@ final class NoteEndpointsSpec extends AnyFunSpec with Matchers with Codec {
       val noteRepo = PostgreSQLInMemoryNotesRepository[IO]()
       val tagsRepo = PostgreSQLInMemoryTagsRepository[IO]()
       val service: NoteService[IO] = NoteService[IO](noteRepo, tagsRepo)
-      val endpoint: HttpRoutes[IO] = NoteEndpoints.endpoints[IO](service)
+      val endpoint: HttpRoutes[IO] = NoteEndpoints[IO](service)
       val router = Router(("/note", endpoint)).orNotFound
 
       val body = Note(None, Term("docker ps"), Description("list docker processes"), List(Tag(None, TagName("DOCKER"))))
